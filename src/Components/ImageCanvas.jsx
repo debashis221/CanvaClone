@@ -2,12 +2,12 @@ import React, { useEffect, useRef, useState } from "react";
 
 const ImageCanvas = (props) => {
   const canvasRef = useRef(null);
+  const { src, width, height } = props;
   const [canvasContext, setCanvasContext] = useState(null);
   const [canvas, setCanvas] = useState(null);
   const [offsetX, setOffsetX] = useState(null);
   const [offsetY, setOffsetY] = useState(null);
   const img = new Image();
-  const { src, width, height } = props;
   const pi2 = 3.14 * 2;
   const resizerRadius = 8;
   const rr = resizerRadius * resizerRadius;

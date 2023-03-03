@@ -1,60 +1,8 @@
 import { useState } from "react";
 import "./App.css";
 import ImageCanvas from "./Components/ImageCanvas";
-import CanvasWithResizableImage from "./Components/NewImage";
-
-const Draggable = ({ children, dragData }) => {
-  const handleDragStart = (event) => {
-    // Set the drag data
-    event.dataTransfer.setData("text/plain", dragData);
-
-    // Add a class to the element being dragged
-    event.currentTarget.classList.add("dragging");
-  };
-
-  const handleDragEnd = (event) => {
-    // Remove the dragging class
-    event.currentTarget.classList.remove("dragging");
-  };
-
-  return (
-    <div
-      draggable={true}
-      onDragStart={handleDragStart}
-      onDragEnd={handleDragEnd}
-    >
-      {children}
-    </div>
-  );
-};
-
-const DropTarget = ({ children, onDrop }) => {
-  const handleDragOver = (event) => {
-    // Prevent default to allow drop
-    event.preventDefault();
-  };
-
-  const handleDrop = (event) => {
-    // Prevent default to avoid redirect
-    event.preventDefault();
-
-    // Get the drag data
-    const dragData = event.dataTransfer.getData("text/plain");
-
-    // Call the onDrop function passed as a prop
-    onDrop(dragData);
-  };
-
-  return (
-    <div
-      className="drop-target"
-      onDragOver={handleDragOver}
-      onDrop={handleDrop}
-    >
-      {children}
-    </div>
-  );
-};
+import Draggable from "./Components/Draggable";
+import DropTarget from "./Components/DropTarget";
 
 const App = () => {
   const [dropData, setDropData] = useState("");
