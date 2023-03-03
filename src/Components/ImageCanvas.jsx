@@ -11,6 +11,7 @@ const ImageCanvas = (props) => {
   const pi2 = 3.14 * 2;
   const resizerRadius = 8;
   const rr = resizerRadius * resizerRadius;
+  let aspectRatio;
   let draggingResizer = -1;
   let imageX;
   let imageY;
@@ -34,7 +35,7 @@ const ImageCanvas = (props) => {
       const canvasCenterX = canvas.width / 2;
       const canvasCenterY = canvas.height / 2;
       //* Calculate the aspect ratio of the image
-      const aspectRatio = img.width / img.height;
+      aspectRatio = img.width / img.height;
 
       //* Calculate the maximum width and height that the image can be
       const maxWidth = canvas.width * 0.8;
@@ -113,7 +114,7 @@ const ImageCanvas = (props) => {
     //* top-left
     dx = x - imageX;
     dy = y - imageY;
-    console.log({dx, dy});
+    // console.log({ dx, dy });
     if (dx * dx + dy * dy <= rr) {
       console.log("top-left");
       return 0;
@@ -184,31 +185,27 @@ const ImageCanvas = (props) => {
           imageX = mouseX;
           imageWidth = imageRight - mouseX;
           imageY = mouseY;
-          imageHeight = imageBottom - mouseY;
-
+          imageHeight = imageWidth / aspectRatio;
           break;
         case 1:
           console.log("resizing top right");
-
           //*top-right
           imageY = mouseY;
           imageWidth = mouseX - imageX;
-          imageHeight = imageBottom - mouseY;
+          imageHeight = imageWidth / aspectRatio;
           break;
         case 2:
           console.log("resizing bottom right");
-
           //*bottom-right
           imageWidth = mouseX - imageX;
-          imageHeight = mouseY - imageY;
+          imageHeight = imageWidth / aspectRatio;
           break;
         case 3:
           console.log("resizing bottom left");
-
           //*bottom-left
           imageX = mouseX;
           imageWidth = imageRight - mouseX;
-          imageHeight = mouseY - imageY;
+          imageHeight = imageWidth / aspectRatio;
           break;
       }
 
@@ -222,14 +219,14 @@ const ImageCanvas = (props) => {
       //* set the image right and bottom
       imageRight = imageX + imageWidth;
       imageBottom = imageY + imageHeight;
-      console.log({
-        imageWidth,
-        imageHeight,
-        imageX,
-        imageY,
-        imageRight,
-        imageBottom,
-      });
+      // console.log({
+      //   imageWidth,
+      //   imageHeight,
+      //   imageX,
+      //   imageY,
+      //   imageRight,
+      //   imageBottom,
+      // });
       //* redraw the image with resizing anchors
       draw(true, true);
     } else if (draggingImage) {
