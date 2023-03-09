@@ -13,14 +13,13 @@ const ImageCanvas = (props) => {
   const resizerRadius = 8;
   const rr = resizerRadius * resizerRadius;
   let draggingResizer = -1;
-  let imageX;
-  let imageY;
+  let imageLeft;
+  let imageTop;
   let startX;
   let startY;
   let imageWidth = width;
   let imageHeight = height;
   let imageRight, imageBottom;
-  let draggingImage = false;
   let mouseX, mouseY;
 
   useEffect(() => {
@@ -53,50 +52,36 @@ const ImageCanvas = (props) => {
       //* Set the image's position to be centered on the canvas
       const imgX = canvasCenterX - imgWidth / 2;
       const imgY = canvasCenterY - imgHeight / 2;
-      imageX = imgX;
-      imageY = imgY;
+      imageLeft = imgX;
+      imageTop = imgY;
       imageWidth = imgWidth;
       imageHeight = imgHeight;
-      imageRight = imageX + imageWidth;
-      imageBottom = imageY + imageHeight;
-      draw(true, false);
+      imageRight = imageLeft + imageWidth;
+      imageBottom = imageTop + imageHeight;
+      draw(true);
     };
+    console.log(imageRight, imageBottom);
   }, [src, width, height, aspectRatio]);
 
-  const draw = (withAnchors, withBorders) => {
+  const draw = (withAnchors) => {
     //* clear the canvas
     canvasContext.clearRect(0, 0, canvas.width, canvas.height);
 
     //* draw the image
     canvasContext.drawImage(
       img,
-      0,
-      0,
-      img.width,
-      img.height,
-      imageX,
-      imageY,
-      imageWidth,
-      imageHeight
+      imageLeft,
+      imageTop,
+      imageRight - imageLeft,
+      imageBottom - imageTop
     );
 
     //* optionally draw the draggable anchors
     if (withAnchors) {
-      drawDragAnchor(imageX, imageY);
-      drawDragAnchor(imageRight, imageY);
+      drawDragAnchor(imageLeft, imageTop);
+      drawDragAnchor(imageRight, imageTop);
       drawDragAnchor(imageRight, imageBottom);
-      drawDragAnchor(imageX, imageBottom);
-    }
-
-    //* optionally draw the connecting anchor lines
-    if (withBorders) {
-      canvasContext.beginPath();
-      canvasContext.moveTo(imageX, imageY);
-      canvasContext.lineTo(imageRight, imageY);
-      canvasContext.lineTo(imageRight, imageBottom);
-      canvasContext.lineTo(imageX, imageBottom);
-      canvasContext.closePath();
-      canvasContext.stroke();
+      drawDragAnchor(imageLeft, imageBottom);
     }
   };
 
@@ -109,62 +94,45 @@ const ImageCanvas = (props) => {
 
   const anchorHitTest = (x, y) => {
     let dx, dy;
-
     //* top-left
-    dx = x - imageX;
-    dy = y - imageY;
+    dx = x - imageLeft;
+    dy = y - imageTop;
     // console.log({ dx, dy });
     if (dx * dx + dy * dy <= rr) {
-      console.log("top-left");
       return 0;
     }
     //* top-right
     dx = x - imageRight;
-    dy = y - imageY;
+    dy = y - imageTop;
     if (dx * dx + dy * dy <= rr) {
-      console.log("top-right");
-
       return 1;
     }
     //* bottom-right
     dx = x - imageRight;
     dy = y - imageBottom;
     if (dx * dx + dy * dy <= rr) {
-      console.log("bottom-right");
-
       return 2;
     }
     //* bottom-left
-    dx = x - imageX;
+    dx = x - imageLeft;
     dy = y - imageBottom;
     if (dx * dx + dy * dy <= rr) {
-      console.log("top-left");
-
       return 3;
     }
     return -1;
-  };
-
-  const hitImage = (x, y) => {
-    return (
-      x > imageX &&
-      x < imageX + imageWidth &&
-      y > imageY &&
-      y < imageY + imageHeight
-    );
   };
 
   const handleMouseDown = (e) => {
     startX = parseInt(e.clientX - offsetX);
     startY = parseInt(e.clientY - offsetY);
     draggingResizer = anchorHitTest(startX, startY);
-    draggingImage = draggingResizer < 0 && hitImage(startX, startY);
   };
 
   const handleMouseUp = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
     draggingResizer = -1;
-    draggingImage = false;
-    draw(true, false);
+    draw(true);
   };
 
   const handleMouseOut = (e) => {
@@ -172,76 +140,43 @@ const ImageCanvas = (props) => {
   };
 
   const handleMouseMove = (e) => {
-    mouseX = parseInt(e.clientX - offsetX);
-    mouseY = parseInt(e.clientY - offsetY);
     if (draggingResizer > -1) {
-      //* resize the image
-      switch (draggingResizer) {
-        case 0:
-          console.log("resizing top left");
-          //*top-left
-          imageX = mouseX;
-          imageWidth = imageRight - imageX;
-          imageY = mouseY;
-          imageHeight = imageWidth / aspectRatio;
-          break;
-        case 1:
-          console.log("resizing top right");
-          //*top-right
-          imageY = mouseY;
-          imageWidth = mouseX - imageX;
-          imageHeight = imageWidth / aspectRatio;
-          break;
-        case 2:
-          console.log("resizing bottom right");
-          //*bottom-right
-          imageWidth = mouseX - imageX;
-          imageHeight = imageWidth / aspectRatio;
-          break;
-        case 3:
-          console.log("resizing bottom left");
-          //*bottom-left
-          imageX = mouseX;
-          imageWidth = imageRight - mouseX;
-          imageHeight = imageWidth / aspectRatio;
-          break;
-      }
-
-      if (imageWidth < 25) {
-        imageWidth = 25;
-      }
-      if (imageHeight < 25) {
-        imageHeight = 25;
-      }
-
-      //* set the image right and bottom
-      imageRight = imageX + imageWidth;
-      imageBottom = imageY + imageHeight;
-
-      //* redraw the image with resizing anchors
-      draw(true, true);
-    } else if (draggingImage) {
       mouseX = parseInt(e.clientX - offsetX);
       mouseY = parseInt(e.clientY - offsetY);
-      //** move the image by the amount of the latest drag
-      let dx = mouseX - startX;
-      let dy = mouseY - startY;
-      imageX += dx;
-      imageY += dy;
-      imageRight += dx;
-      imageBottom += dy;
-      //** reset the startXY for next time
-      startX = mouseX;
-      startY = mouseY;
-
-      //** redraw the image with border
-      draw(false, true);
+      switch (draggingResizer) {
+        case 0:
+          //*top-left
+          imageLeft = mouseX;
+          imageTop =
+            imageBottom - (imageHeight * (imageRight - imageLeft)) / imageWidth;
+          break;
+        case 1:
+          //*top-right
+          imageRight = mouseX;
+          imageTop =
+            imageBottom - (imageHeight * (imageRight - imageLeft)) / imageWidth;
+          break;
+        case 2:
+          //*bottom-right
+          imageBottom = mouseY;
+          imageRight =
+            imageLeft + (imageWidth * (imageBottom - imageTop)) / imageHeight;
+          break;
+        case 3:
+          //*bottom-left
+          imageLeft = mouseX;
+          imageBottom =
+            imageTop + (imageHeight * (imageRight - imageLeft)) / imageWidth;
+          break;
+      }
+      //* redraw the image with resizing anchors
+      draw(true);
     }
   };
   return (
     <canvas
       ref={canvasRef}
-      width={window.innerWidth / 4}
+      width={window.innerWidth / 2}
       height={window.innerHeight / 2}
       onMouseMove={handleMouseMove}
       onMouseUp={handleMouseUp}
