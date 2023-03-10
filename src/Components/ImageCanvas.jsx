@@ -169,7 +169,6 @@ const ImageCanvas = (props) => {
             imageTop + (imageHeight * (imageRight - imageLeft)) / imageWidth;
           break;
       }
-      //* redraw the image with resizing anchors
       draw(true);
     }
   };
