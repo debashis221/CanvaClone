@@ -5,13 +5,8 @@ const DropTarget = ({ children, onDrop }) => {
   };
 
   const handleDrop = (event) => {
-    // Prevent default to avoid redirect
     event.preventDefault();
-
-    // Get the drag data
     const dragData = event.dataTransfer.getData("text/plain");
-
-    // Call the onDrop function passed as a prop
     onDrop(dragData);
   };
 

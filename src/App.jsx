@@ -1,8 +1,8 @@
-import { useState } from "react";
+import { Suspense, lazy, useState } from "react";
 import "./App.css";
-import ImageCanvas from "./Components/ImageCanvas";
-import Draggable from "./Components/Draggable";
-import DropTarget from "./Components/DropTarget";
+const Draggable = lazy(() => import("./Components/Draggable"));
+const DropTarget = lazy(() => import("./Components/DropTarget"));
+const ImageCanvas = lazy(() => import("./Components/ImageCanvas"));
 
 const App = () => {
   const [dropData, setDropData] = useState("");
@@ -25,26 +25,28 @@ const App = () => {
       <div className="images__wrapper">
         <h2>Images</h2>
         <div className="images__container">
-          {imagesData.map((image, index) => {
-            return (
-              <Draggable dragData={image.path} key={index}>
-                <div className="image" key={image.id}>
-                  <img alt={image.name} src={image.path} />
-                </div>
-              </Draggable>
-            );
-          })}
+          <Suspense fallback={<>Loading...</>}>
+            {imagesData.map((image, index) => {
+              return (
+                <Draggable dragData={image.path} key={index}>
+                  <div className="image" key={image.id}>
+                    <img alt={image.name} src={image.path} />
+                  </div>
+                </Draggable>
+              );
+            })}
+          </Suspense>
         </div>
       </div>
-
-      <DropTarget onDrop={handleDrop}>
-        <div className="dropzone__wrapper">
-          <div className="dropzone__image__container">
-            <ImageCanvas src={dropData} width={300} height={200} />
-            {/* <CanvasWithResizableImage /> */}
+      <Suspense fallback={<>Loading...</>}>
+        <DropTarget onDrop={handleDrop}>
+          <div className="dropzone__wrapper">
+            <div className="dropzone__image__container">
+              <ImageCanvas src={dropData} width={300} height={200} />
+            </div>
           </div>
-        </div>
-      </DropTarget>
+        </DropTarget>
+      </Suspense>
     </div>
   );
 };

@@ -8,19 +8,21 @@ const ImageCanvas = (props) => {
   const [canvas, setCanvas] = useState(null);
   const [offsetX, setOffsetX] = useState(null);
   const [offsetY, setOffsetY] = useState(null);
+  const [imageWidth, setImageWidth] = useState(width);
+  const [imageHeight, setImageHeight] = useState(height);
+  const imageLeft = useRef(null);
+  const imageTop = useRef(null);
+  const imageRight = useRef(null);
+  const imageBottom = useRef(null);
+  const startX = useRef(null);
+  const startY = useRef(null);
+  const mouseX = useRef(null);
+  const mouseY = useRef(null);
   const img = new Image();
   const pi2 = 3.14 * 2;
   const resizerRadius = 8;
   const rr = resizerRadius * resizerRadius;
   let draggingResizer = -1;
-  let imageLeft;
-  let imageTop;
-  let startX;
-  let startY;
-  let imageWidth = width;
-  let imageHeight = height;
-  let imageRight, imageBottom;
-  let mouseX, mouseY;
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -33,14 +35,9 @@ const ImageCanvas = (props) => {
     img.onload = () => {
       const canvasCenterX = canvas.width / 2;
       const canvasCenterY = canvas.height / 2;
-      //* Calculate the aspect ratio of the image
       setAspectRatio(img.width / img.height);
-
-      //* Calculate the maximum width and height that the image can be
       const maxWidth = canvas.width * 0.8;
       const maxHeight = canvas.height * 0.8;
-
-      //* Calculate the width and height of the image based on the maximum values and the aspect ratio
       let imgWidth = maxWidth;
       let imgHeight = maxHeight;
       if (imgWidth / aspectRatio > maxHeight) {
@@ -48,20 +45,17 @@ const ImageCanvas = (props) => {
       } else {
         imgHeight = maxWidth / aspectRatio;
       }
-
-      //* Set the image's position to be centered on the canvas
       const imgX = canvasCenterX - imgWidth / 2;
       const imgY = canvasCenterY - imgHeight / 2;
-      imageLeft = imgX;
-      imageTop = imgY;
-      imageWidth = imgWidth;
-      imageHeight = imgHeight;
-      imageRight = imageLeft + imageWidth;
-      imageBottom = imageTop + imageHeight;
+      imageLeft.current = imgX;
+      imageTop.current = imgY;
+      setImageWidth(imgWidth);
+      setImageHeight(imgHeight);
+      imageRight.current = imageLeft.current + imageWidth;
+      imageBottom.current = imageTop.current + imageHeight;
       draw(true);
     };
-    console.log(imageRight, imageBottom);
-  }, [src, width, height, aspectRatio]);
+  }, [src, width, height, aspectRatio, imageWidth, imageHeight]);
 
   const draw = (withAnchors) => {
     //* clear the canvas
@@ -70,18 +64,18 @@ const ImageCanvas = (props) => {
     //* draw the image
     canvasContext.drawImage(
       img,
-      imageLeft,
-      imageTop,
-      imageRight - imageLeft,
-      imageBottom - imageTop
+      imageLeft.current,
+      imageTop.current,
+      imageRight.current - imageLeft.current,
+      imageBottom.current - imageTop.current
     );
 
     //* optionally draw the draggable anchors
     if (withAnchors) {
-      drawDragAnchor(imageLeft, imageTop);
-      drawDragAnchor(imageRight, imageTop);
-      drawDragAnchor(imageRight, imageBottom);
-      drawDragAnchor(imageLeft, imageBottom);
+      drawDragAnchor(imageLeft.current, imageTop.current);
+      drawDragAnchor(imageRight.current, imageTop.current);
+      drawDragAnchor(imageRight.current, imageBottom.current);
+      drawDragAnchor(imageLeft.current, imageBottom.current);
     }
   };
 
@@ -95,27 +89,26 @@ const ImageCanvas = (props) => {
   const anchorHitTest = (x, y) => {
     let dx, dy;
     //* top-left
-    dx = x - imageLeft;
-    dy = y - imageTop;
-    // console.log({ dx, dy });
+    dx = x - imageLeft.current;
+    dy = y - imageTop.current;
     if (dx * dx + dy * dy <= rr) {
       return 0;
     }
     //* top-right
-    dx = x - imageRight;
-    dy = y - imageTop;
+    dx = x - imageRight.current;
+    dy = y - imageTop.current;
     if (dx * dx + dy * dy <= rr) {
       return 1;
     }
     //* bottom-right
-    dx = x - imageRight;
-    dy = y - imageBottom;
+    dx = x - imageRight.current;
+    dy = y - imageBottom.current;
     if (dx * dx + dy * dy <= rr) {
       return 2;
     }
     //* bottom-left
-    dx = x - imageLeft;
-    dy = y - imageBottom;
+    dx = x - imageLeft.current;
+    dy = y - imageBottom.current;
     if (dx * dx + dy * dy <= rr) {
       return 3;
     }
@@ -123,9 +116,9 @@ const ImageCanvas = (props) => {
   };
 
   const handleMouseDown = (e) => {
-    startX = parseInt(e.clientX - offsetX);
-    startY = parseInt(e.clientY - offsetY);
-    draggingResizer = anchorHitTest(startX, startY);
+    startX.current = parseInt(e.clientX - offsetX);
+    startY.current = parseInt(e.clientY - offsetY);
+    draggingResizer = anchorHitTest(startX.current, startY.current);
   };
 
   const handleMouseUp = (e) => {
@@ -141,32 +134,40 @@ const ImageCanvas = (props) => {
 
   const handleMouseMove = (e) => {
     if (draggingResizer > -1) {
-      mouseX = parseInt(e.clientX - offsetX);
-      mouseY = parseInt(e.clientY - offsetY);
+      mouseX.current = parseInt(e.clientX - offsetX);
+      mouseY.current = parseInt(e.clientY - offsetY);
       switch (draggingResizer) {
         case 0:
           //*top-left
-          imageLeft = mouseX;
-          imageTop =
-            imageBottom - (imageHeight * (imageRight - imageLeft)) / imageWidth;
+          imageLeft.current = mouseX.current;
+          imageTop.current =
+            imageBottom.current -
+            (imageHeight * (imageRight.current - imageLeft.current)) /
+              imageWidth;
           break;
         case 1:
           //*top-right
-          imageRight = mouseX;
-          imageTop =
-            imageBottom - (imageHeight * (imageRight - imageLeft)) / imageWidth;
+          imageRight.current = mouseX.current;
+          imageTop.current =
+            imageBottom.current -
+            (imageHeight * (imageRight.current - imageLeft.current)) /
+              imageWidth;
           break;
         case 2:
           //*bottom-right
-          imageBottom = mouseY;
-          imageRight =
-            imageLeft + (imageWidth * (imageBottom - imageTop)) / imageHeight;
+          imageBottom.current = mouseY.current;
+          imageRight.current =
+            imageLeft.current +
+            (imageWidth * (imageBottom.current - imageTop.current)) /
+              imageHeight;
           break;
         case 3:
           //*bottom-left
-          imageLeft = mouseX;
-          imageBottom =
-            imageTop + (imageHeight * (imageRight - imageLeft)) / imageWidth;
+          imageLeft.current = mouseX.current;
+          imageBottom.current =
+            imageTop.current +
+            (imageHeight * (imageRight.current - imageLeft.current)) /
+              imageWidth;
           break;
       }
       draw(true);
